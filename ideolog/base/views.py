@@ -30,35 +30,6 @@ class ModelSerializer:
     def load_or_build(self):
         raise NotImplementedError("Abstract!")
 
-class BaseModel(ModelSerializer):
-    
-    def __init__(self, *args, **kwargs):
-        self.cache_location = 'base-model.pepengra'
-
-    def predict(self, congress_member_id: str, statement: str):
-        pass
-
-    def load(self):
-        pass
-
-    def build(self):
-        members = pd.read_csv('../data/house_table.csv')['id'].unique()
-        vote_table = pd.read_csv('../data/vote_table.csv')
-        self.model = {}
-        for member in members:
-            self.model[member] = pipeline = Pipeline([
-                ('vect', CountVectorizer(ngram_range=(1,2))),
-                ('tfidf', TfidfTransformer(use_idf=True)),
-                ('clf', MultinomialNB(alpha=1e-3, fit_prior=True))
-            ]).fit(
-                
-            )
-
-
-        with open(self.cache_location, 'wb') as handle:
-            pickle.dump(self.model, handle)
-
-
 
 def predict(request):
     member = request.POST.get('member')
