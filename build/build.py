@@ -107,11 +107,11 @@ def download_bill_summaries():
 
         
         try:
-            VOTE_URLS.append((bill_id, results['votes'][0]['api_url']))
+            VOTE_URLS.append((bill_id_orig, results['votes'][0]['api_url']))
         except IndexError:
             continue
 
-        print("Adding:", bill_id, bill_title)
+        print("Adding:", bill_id_orig, bill_title)
 
         trump_stance = voting_record[voting_record['bill_id'] == bill_id_orig]['trump_position'].unique()[0]
         trump_agree = int(trump_stance.lower() == 'support')
@@ -168,7 +168,7 @@ def download_congressmen_table():
                 agree_history = float(agree_rate[agree_rate['bioguide'] == member_id]['agree_pct'].mean())
 
                 CONGRESS_TABLE_DATA['id'].append(member_id)
-                if os.path.isfile(f"ideolog/base/static/base/{member['state'].lower()}-{member['last_name']}.jpg"):
+                if not os.path.isfile(f"ideolog/base/static/base/{member['state'].lower()}-{member['last_name']}.jpg"):
                     os.system(
                         f"Powershell -Command Invoke-WebRequest -UseBasicParsing -Uri \"https://raw.githubusercontent.com/unitedstates/images/gh-pages/congress/225x275/{member_id}.jpg\" -O \"ideolog/base/static/base/{member['state'].lower()}-{member['last_name']}.jpg\""
                     )
