@@ -1,4 +1,7 @@
 from django.shortcuts import render
+import sys
+sys.path.insert(0, './model/')
+from VoteClassifier import VoteClassifier
 from django.http import JsonResponse
 import json
 
@@ -9,28 +12,12 @@ from sklearn.feature_extraction.text import TfidfTransformer
 from sklearn.naive_bayes import MultinomialNB
 from sklearn.pipeline import Pipeline
 
+from threading import Thread
 import pandas as pd
 
 HOUSE_TABLE = pd.read_csv('../data/house_table.csv')
 
 # Create your views here.
-
-class ModelSerializer:
-
-    def __init__(self, whateverJoshMade):
-        self._joshArtifact = whateverJoshMade
-
-    def predict(self, congress_member_id: str, statement: str) -> float:
-        raise NotImplementedError("Abstract!")
-
-    def load(self):
-        raise NotImplementedError("Abstract!")
-
-    def build(self):
-        raise NotImplementedError("Abstract!")
-
-    def load_or_build(self):
-        raise NotImplementedError("Abstract!")
 
 def predict(request):
     statement = request.GET.get('statement')
@@ -39,8 +26,18 @@ def predict(request):
     
     names = list(members['name'])
     state = list(members['state'])
+    clf = VoteClassifier()
 
-    import random
+    threads = []
+    results = {}
+    for i, name in enumerate(names):
+        print(i)
+        threads.append(Thread(target=lambda i: results.setdefault(i, clf.classify_vote(statement, name)), args=(i,)))
+        threads[-1].start()
+
+    for thread in threads:
+        thread.join()
+        print(len(results))
 
     responseData = {
         'ok': True,
@@ -50,7 +47,7 @@ def predict(request):
             {
                 'name': name,
                 'state': state[i],
-                'agree': random.random()
+                'agree': clf.classify_vote(statement, name)
             } for i, name in enumerate(names)
         ]
     }
