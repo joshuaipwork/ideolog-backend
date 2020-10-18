@@ -30,7 +30,7 @@ SECRET_KEY = os.environ.get(
 DEBUG = True
 
 ALLOWED_HOSTS = [
-    '12fd59c9e5ab.ngrok.io'
+    'f642241e13fb.ngrok.io'
 ]
 
 
