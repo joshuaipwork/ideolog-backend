@@ -11,6 +11,8 @@ from sklearn.pipeline import Pipeline
 
 import pandas as pd
 
+HOUSE_TABLE = pd.read_csv('../data/house_table.csv')
+
 # Create your views here.
 
 class ModelSerializer:
@@ -30,14 +32,31 @@ class ModelSerializer:
     def load_or_build(self):
         raise NotImplementedError("Abstract!")
 
-
 def predict(request):
-    member = request.POST.get('member')
-    statement = request.POST.get('statement')
+    statement = request.GET.get('statement')
+    chamber = request.GET.get('chamber')
+    members = HOUSE_TABLE[HOUSE_TABLE['chamber'] == chamber]
+    
+    names = list(members['name'])
+    state = list(members['state'])
+
+    import random
+
     responseData = {
         'ok': True,
-        'member': member,
-        'statement': statement
+        'statement': statement,
+        'chamber': chamber,
+        'results': [
+            {
+                'name': name,
+                'state': state[i],
+                'agree': random.random()
+            } for i, name in enumerate(names)
+        ]
     }
 
     return JsonResponse(responseData)
+
+
+def senators():
+    pass
