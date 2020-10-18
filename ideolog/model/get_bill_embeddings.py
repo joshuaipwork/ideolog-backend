@@ -1,7 +1,9 @@
-import EmbeddingGenerator as eg
+from ideolog.model import EmbeddingGenerator as eg
 import pandas as pd
 
-bills = pd.read_csv('./data/bill_table.csv')
+'''A simple script for generating the embeddings of the summaries of every bill in the bill_table.csv'''
+
+bills = pd.read_csv('../../data/bill_table.csv')
 embedder = eg.EmbeddingGenerator()
 
 for index, bill in bills.iterrows():

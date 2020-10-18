@@ -1,6 +1,5 @@
-import VoteClassifier as vc
-import pandas as pd
+from ideolog.model import VoteClassifier as vc
 
 classifier = vc.VoteClassifier()
-print(classifier.classify_vote("This bill bans abortion under all circumstances.", "Maria Cantwell"))
-
+print(classifier.classify_vote("legalize marijuana.", "Maria Cantwell"))
+print("best matches: " + classifier.return_best_matches())
