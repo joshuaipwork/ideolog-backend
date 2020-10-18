@@ -1,8 +1,9 @@
-from ideolog.model import EmbeddingGenerator as eg
+import EmbeddingGenerator as eg
 import pandas as pd
 import torch
 import json
 
+torch.cuda.set_device(0)
 
 class VoteClassifier:
     """ VoteClassifier is a class which predicts the way a legislator will vote based on their past records. """
@@ -11,6 +12,9 @@ class VoteClassifier:
         self.embedder = eg.EmbeddingGenerator()
         self.best_matches = []
         self.reset_best_matches()
+
+        self.legislators = pd.read_csv('../data/house_table.csv')
+        self.vote_history = pd.read_csv('../data/vote_table.csv')
 
     def reset_best_matches(self):
         ''' Used internally to reset the record of the best matches '''
@@ -27,11 +31,11 @@ class VoteClassifier:
         :return: a prediction 'yea' or 'nay' on how the legislator will vote on a bill with that issue.
         '''
         # retrieve the ID of the legislator
-        legislators = pd.read_csv('../../data/house_table.csv')
+        legislators = self.legislators
         leg_id = legislators[legislators['name'] == legislator].iloc[0]['id']
 
         # get a set of bills which the legislator voted on
-        vote_history = pd.read_csv('../../data/vote_table.csv')
+        vote_history = self.vote_history
         bill_df = vote_history.loc[vote_history['person'] == leg_id]
 
         # load the embeddings of all the bills the legislator voted on
@@ -40,7 +44,7 @@ class VoteClassifier:
         for index, row in bill_df.iterrows():
             # add embeddings to the right set
             try:
-                tensor = torch.load('../../data/tensors/' + row['bill'] + ".pt")
+                tensor = torch.load('../data/tensors/' + row['bill'] + ".pt")
                 if row['vote'] == 1:
                     yeas.append((tensor, row['bill']))
                 else:
@@ -82,7 +86,7 @@ class VoteClassifier:
         ''' returns a json string which represents the best five matches
             of the last query. '''
         result = []
-        bills = pd.read_csv('../../data/bill_table.csv')
+        bills = pd.read_csv('../data/bill_table.csv')
 
         for i in range(5):
             if self.best_matches[i][0]:
