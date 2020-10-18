@@ -168,6 +168,10 @@ def download_congressmen_table():
                 agree_history = float(agree_rate[agree_rate['bioguide'] == member_id]['agree_pct'].mean())
 
                 CONGRESS_TABLE_DATA['id'].append(member_id)
+                if os.path.isfile(f"ideolog/base/static/base/{member['state'].lower()}-{member['last_name']}.jpg"):
+                    os.system(
+                        f"Powershell -Command Invoke-WebRequest -UseBasicParsing -Uri \"https://raw.githubusercontent.com/unitedstates/images/gh-pages/congress/225x275/{member_id}.jpg\" -O \"ideolog/base/static/base/{member['state'].lower()}-{member['last_name']}.jpg\""
+                    )
                 CONGRESS_TABLE_DATA['name'].append(member_name)
                 CONGRESS_TABLE_DATA['party'].append(member['party'])
                 CONGRESS_TABLE_DATA['state'].append(member['state'])
