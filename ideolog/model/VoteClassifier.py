@@ -13,15 +13,15 @@ class VoteClassifier:
         self.best_matches = []
         self.reset_best_matches()
 
-        self.legislators = pd.read_csv('../../data/house_table.csv')
-        self.vote_history = pd.read_csv('../../data/vote_table.csv')
-        self.bill_records = pd.read_csv('../../data/bill_table.csv')
+        self.legislators = pd.read_csv('../data/house_table.csv')
+        self.vote_history = pd.read_csv('../data/vote_table.csv')
+        self.bill_records = pd.read_csv('../data/bill_table.csv')
 
         self.bill_tensors = []
         for index, row in self.bill_records.iterrows():
             # add embeddings to the right set
             try:
-                tensor = torch.load('../../data/tensors/' + row['id'] + ".pt")
+                tensor = torch.load('../data/tensors/' + row['id'] + ".pt")
                 self.bill_tensors.append((tensor, row['id']))
             except Exception:
                 print('cant find ' + row['id'])
@@ -132,6 +132,7 @@ class VoteClassifier:
                 self.best_matches[0] = (bill[1], sim, 'nay')
                 self.best_matches.sort(key=lambda x: -x[1])
 
+        print(self.best_matches[-1][2])
         return self.best_matches[-1][2]
 
     def return_best_matches(self):
