@@ -13,12 +13,67 @@ class VoteClassifier:
         self.best_matches = []
         self.reset_best_matches()
 
-        self.legislators = pd.read_csv('../data/house_table.csv')
-        self.vote_history = pd.read_csv('../data/vote_table.csv')
+        self.legislators = pd.read_csv('../../data/house_table.csv')
+        self.vote_history = pd.read_csv('../../data/vote_table.csv')
+        self.bill_records = pd.read_csv('../../data/bill_table.csv')
+
+        self.bill_tensors = []
+        for index, row in self.bill_records.iterrows():
+            # add embeddings to the right set
+            try:
+                tensor = torch.load('../../data/tensors/' + row['id'] + ".pt")
+                self.bill_tensors.append((tensor, row['id']))
+            except Exception:
+                print('cant find ' + row['id'])
+                continue
+
 
     def reset_best_matches(self):
         ''' Used internally to reset the record of the best matches '''
         self.best_matches = [('', 1, ''), ('', 1, ''), ('', 1, ''), ('', 1, ''), ('', 1, '')]
+
+    def classify_all_legislators(self, prompt):
+        '''
+        This function predicts the way that every legislator will vote on a prompt. Before running, you must use
+        EmbeddingsGenerator to get embeddings for all the bills that will be included in the legislative record.
+        :return:
+        '''
+        print('started')
+
+        # use embedder to turn the prompt into embeddings
+        prompt_embed = self.embedder.get_embeddings(prompt, willSave=False)
+        prompt_embed = torch.flatten(prompt_embed)
+
+        # get the list of bills
+        tensors = self.bill_tensors
+
+        # determine the 5 best matches for this bill
+        self.reset_best_matches()
+        cos = torch.nn.CosineSimilarity(dim=0, eps=1e-6)
+        for bill in tensors:
+            flat = torch.flatten(bill[0])
+            sim = cos(flat, prompt_embed)
+            sim = sim.item()
+            if sim < self.best_matches[0][1]:
+                self.best_matches[0] = (bill[1], sim, '')
+                self.best_matches.sort(key=lambda x: -x[1])
+
+        # for each legislator, go through the 5 best matches until you find
+        # a bill that the legislator has voted on, and predict that
+        predictions = {}
+        vote_history = self.vote_history
+
+        for index, row in self.legislators.iterrows():
+            leg_id = row['id']
+            for bill, sim, _ in self.best_matches:
+                vote = vote_history.loc[(vote_history['person'] == leg_id) & (vote_history['bill'] == bill)]
+                # print(vote.shape[0])
+                # if the legislator voted on this bill
+                if vote.shape[0] > 0:
+                    predictions[row['name']] = vote.iloc[0]['vote']
+                    break
+
+        return predictions
 
     def classify_vote(self, prompt, legislator):
         '''
@@ -68,7 +123,6 @@ class VoteClassifier:
             if sim < self.best_matches[0][1]:
                 self.best_matches[0] = (bill[1], sim, 'yea')
                 self.best_matches.sort(key=lambda x: -x[1])
-                print(self.best_matches)
 
         for bill in nays:
             flat = torch.flatten(bill[0])
@@ -77,9 +131,7 @@ class VoteClassifier:
             if sim < self.best_matches[0][1]:
                 self.best_matches[0] = (bill[1], sim, 'nay')
                 self.best_matches.sort(key=lambda x: -x[1])
-                print(self.best_matches)
 
-        print(self.best_matches)
         return self.best_matches[-1][2]
 
     def return_best_matches(self):
